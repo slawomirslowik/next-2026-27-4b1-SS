@@ -1,6 +1,6 @@
-# Projekt Next.js: Komponenty, propsy i stan (interaktywność)
+# Komponenty, propsy i stan (interaktywność)
 
-W poprzednim bloku zajęć poznałeś strukturę katalogu `app`, layouty oraz podstawowy routing plikowy. Teraz nauczysz się tworzyć własne **komponenty React**, przekazywać do nich dane (**propsy**) oraz dodawać **interaktywność** za pomocą stanu (`useState`).
+W poprzedniej instrukcji (`04-AppRouting-pierwszeWidoki.md`) poznałeś strukturę katalogu `app`, layouty oraz podstawowy routing plikowy. Teraz nauczysz się tworzyć własne **komponenty React**, przekazywać do nich dane (**propsy**) oraz dodawać **interaktywność** za pomocą stanu (`useState`).
 
 > **Ważne (dla tej wersji projektu):**
 > Sprawdź lokalne materiały: `node_modules/next/dist/docs/` oraz komunikaty deprecacji przed implementacją.
