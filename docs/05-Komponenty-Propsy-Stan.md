@@ -1,6 +1,6 @@
-# Komponenty, propsy i stan (interaktywność)
+# Projekt Next.js: Komponenty, propsy i stan (interaktywność)
 
-W poprzedniej instrukcji (`04-AppRouting-pierwszeWidoki.md`) poznałeś strukturę katalogu `app`, layouty oraz podstawowy routing plikowy. Teraz nauczysz się tworzyć własne **komponenty React**, przekazywać do nich dane (**propsy**) oraz dodawać **interaktywność** za pomocą stanu (`useState`).
+W poprzednim bloku zajęć poznałeś strukturę katalogu `app`, layouty oraz podstawowy routing plikowy. Teraz nauczysz się tworzyć własne **komponenty React**, przekazywać do nich dane (**propsy**) oraz dodawać **interaktywność** za pomocą stanu (`useState`).
 
 > **Ważne (dla tej wersji projektu):**
 > Sprawdź lokalne materiały: `node_modules/next/dist/docs/` oraz komunikaty deprecacji przed implementacją.
@@ -96,10 +96,22 @@ export default function Counter() {
 Dodaj komponent do strony głównej (`src/app/page.js`):
 
 ```jsx
+import Link from 'next/link';
 import Counter from '@/components/Counter';
-// ...
-<Counter />
+
+export default function HomePage() {
+  return (
+    <main style={{ padding: '2rem' }}>
+      <h1>Witaj na naszej stronie głównej!</h1>
+      <p>To jest pierwsza strona stworzona w Next.js z App Routerem.</p>
+      <Link href="/about">Przejdź do strony O nas</Link>
+      <Counter />
+    </main>
+  );
+}
 ```
+
+> **Uwaga:** komponent `<Counter />` musi znaleźć się **wewnątrz** JSX zwracanego przez `return`. Umieszczony poza funkcją komponentu nie zostanie wyrenderowany.
 
 ---
 
@@ -131,6 +143,30 @@ export default function GreetingForm() {
 
 To jest tzw. **kontrolowany komponent** — wartość pola `input` jest w pełni zarządzana przez stan React.
 
+Dodaj formularz do strony głównej (`src/app/page.js`) — zaimportuj go i umieść pod licznikiem:
+
+```jsx
+import Link from 'next/link';
+import Counter from '@/components/Counter';
+import GreetingForm from '@/components/GreetingForm';
+
+export default function HomePage() {
+  return (
+    <main style={{ padding: '2rem' }}>
+      <h1>Witaj na naszej stronie głównej!</h1>
+      <p>To jest pierwsza strona stworzona w Next.js z App Routerem.</p>
+      <Link href="/about">Przejdź do strony O nas</Link>
+      <Counter />
+      <GreetingForm />
+    </main>
+  );
+}
+```
+
+Sprawdź na <http://localhost:3000>: po wpisaniu imienia pod polem od razu pojawi się powitanie.
+
+> Zauważ, że `page.js` **nie ma** dyrektywy `'use client'` — pozostaje Server Componentem. Dyrektywa jest potrzebna tylko w plikach komponentów, które używają stanu (`Counter.js`, `GreetingForm.js`).
+
 ---
 
 ## Krok 6 (dla chętnych): Komponenty złożone z wieloma stanami
@@ -146,6 +182,7 @@ Spróbuj połączyć `Counter` i `GreetingForm` w jeden komponent `Dashboard`, w
 - [ ] Utworzony `Counter` z dyrektywą `"use client"` i `useState`
 - [ ] `Counter` działa na stronie głównej
 - [ ] Utworzony kontrolowany formularz `GreetingForm`
+- [ ] `GreetingForm` działa na stronie głównej
 
 ---
 
@@ -155,3 +192,94 @@ Spróbuj połączyć `Counter` i `GreetingForm` w jeden komponent `Dashboard`, w
 - React — Przekazywanie propsów: <https://react.dev/learn/passing-props-to-a-component>
 - React — Stan komponentu: <https://react.dev/learn/state-a-components-memory>
 - Next.js — Client i Server Components: <https://nextjs.org/docs/app/building-your-application/rendering/client-components>
+
+---
+
+## Rozwiązanie zadania dla chętnych (Krok 6)
+
+Wystarczy nowy komponent, który renderuje oba istniejące komponenty obok siebie. Każdy z nich nadal ma własny `useState`, więc ich stany są od siebie niezależne.
+
+### Wariant 1: kompozycja gotowych komponentów (najprostszy)
+
+Plik `src/components/Dashboard.js`:
+
+```jsx
+import Counter from './Counter';
+import GreetingForm from './GreetingForm';
+
+export default function Dashboard() {
+  return (
+    <section style={{ border: '1px solid #ddd', borderRadius: 8, padding: '1rem' }}>
+      <h2>Panel</h2>
+      <Counter />
+      <GreetingForm />
+    </section>
+  );
+}
+```
+
+W `src/app/page.js` zamień `<Counter />` i `<GreetingForm />` na jeden komponent:
+
+```jsx
+import Link from 'next/link';
+import Dashboard from '@/components/Dashboard';
+
+export default function HomePage() {
+  return (
+    <main style={{ padding: '2rem' }}>
+      <h1>Witaj na naszej stronie głównej!</h1>
+      <p>To jest pierwsza strona stworzona w Next.js z App Routerem.</p>
+      <Link href="/about">Przejdź do strony O nas</Link>
+      <Dashboard />
+    </main>
+  );
+}
+```
+
+`Dashboard` **nie potrzebuje** `'use client'`, bo sam nie używa stanu ani zdarzeń — tylko składa dwa komponenty klienckie.
+
+**Jak sprawdzić niezależność stanów:** kliknij kilka razy „Zwiększ” i wpisz imię — zmiana jednego nie wpływa na drugi. Możesz też wstawić `<Dashboard />` dwa razy: każda kopia ma osobny licznik i osobne imię.
+
+### Wariant 2: oba stany w jednym komponencie
+
+Jeden komponent może mieć kilka wywołań `useState`:
+
+```jsx
+'use client';
+
+import { useState } from 'react';
+
+export default function Dashboard() {
+  const [count, setCount] = useState(0);
+  const [name, setName] = useState('');
+
+  return (
+    <section style={{ border: '1px solid #ddd', borderRadius: 8, padding: '1rem' }}>
+      <h2>Panel</h2>
+
+      <p>Aktualna wartość: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Zwiększ</button>
+      <button onClick={() => setCount(count - 1)}>Zmniejsz</button>
+
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Podaj swoje imię"
+      />
+      {name && <p>Witaj, {name}! Licznik: {count}</p>}
+    </section>
+  );
+}
+```
+
+Tu `'use client'` jest **wymagane**, bo komponent sam używa `useState` i `onClick`. Bonus: oba stany są w jednym miejscu, więc można je łączyć (np. w powitaniu jest wartość licznika). W wariancie 1 nie da się tego zrobić bez podniesienia stanu do rodzica — ten temat omawia instrukcja `06-Hooki-useState-useContext.md`.
+
+### Porównanie
+
+| | Wariant 1 | Wariant 2 |
+|---|---|---|
+| Gdzie jest stan | w `Counter` i `GreetingForm` | w `Dashboard` |
+| `'use client'` w `Dashboard` | niepotrzebne | wymagane |
+| Ponowne użycie komponentów | tak | nie |
+| Stany mogą się „widzieć” | nie | tak |
