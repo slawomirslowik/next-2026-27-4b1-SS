@@ -343,6 +343,57 @@ export function AnyNestedComponent() {
 
 Teraz **dowolny** komponent w drzewie opakowanym przez `CounterProvider` ma dostęp do tego samego `count` i `setCount` — bez przekazywania propsów przez pośrednie komponenty.
 
+#### Jak to dokładnie wykonać — krok po kroku
+
+Powyższy fragment jest poglądowy (`AnyNestedComponent` to przykładowa nazwa). Aby zobaczyć realny efekt na własnej stronie, potrzebujesz **co najmniej dwóch** osobnych, niepowiązanych ze sobą propsami komponentów korzystających z `useCounter()` — dopiero wtedy widać sens kontekstu.
+
+**a) Utwórz `src/components/ContextCounterDisplay.js`:**
+
+```jsx
+'use client';
+
+import { useCounter } from '@/context/CounterContext';
+
+export default function ContextCounterDisplay() {
+  const { count } = useCounter();
+  return <p>Wartość z kontekstu: {count}</p>;
+}
+```
+
+**b) Utwórz `src/components/ContextCounterButton.js`:**
+
+```jsx
+'use client';
+
+import { useCounter } from '@/context/CounterContext';
+
+export default function ContextCounterButton() {
+  const { count, setCount } = useCounter();
+  return <button onClick={() => setCount(count + 1)}>Zwiększ (kontekst)</button>;
+}
+```
+
+**c) Użyj obu komponentów w `src/app/page.js` — bez przekazywania żadnych propsów:**
+
+```jsx
+import ContextCounterDisplay from '@/components/ContextCounterDisplay';
+import ContextCounterButton from '@/components/ContextCounterButton';
+
+export default function HomePage() {
+  return (
+    <main style={{ padding: '2rem' }}>
+      {/* ...pozostała zawartość strony... */}
+      <ContextCounterDisplay />
+      <ContextCounterButton />
+    </main>
+  );
+}
+```
+
+**d) Przetestuj:** kliknij „Zwiększ (kontekst)”. Mimo że `ContextCounterDisplay` i `ContextCounterButton` to **dwa zupełnie osobne komponenty**, nieznające się nawzajem i niepołączone propsami, oba „widzą” ten sam `count` — bo czerpią go z `CounterProvider`, który (dzięki Krokowi 6.2) opakowuje całą aplikację w `layout.js`.
+
+> **Różnica względem Kroku 5 (lifting state up):** tam stan musiał „przepływać” przez propsy od rodzica (`CounterDashboard`) do dzieci (`CounterDisplay`, `CounterButtons`). Tutaj `ContextCounterDisplay` i `ContextCounterButton` mogą znajdować się **gdziekolwiek** w drzewie komponentów — nawet bardzo głęboko zagnieżdżone, w zupełnie różnych gałęziach — i nadal mają dostęp do tego samego stanu przez `useCounter()`, bez przekazywania niczego „po drodze”.
+
 ---
 
 ## Krok 7: Kiedy używać czego?
@@ -410,6 +461,7 @@ export default function SimpleCounter() {
 - [ ] Utworzone `TickTimer` i `TimerToggle` — przetestowane działanie funkcji sprzątającej (log w konsoli przy odmontowaniu)
 - [ ] Zaimplementowany `CounterDashboard` ze stanem podniesionym do rodzica
 - [ ] Utworzony `CounterContext` i działające współdzielenie stanu przez `useContext`
+- [ ] Utworzone `ContextCounterDisplay` i `ContextCounterButton` — dwa niezależne komponenty współdzielące stan z kontekstu
 - [ ] (opcjonalnie) Utworzony własny hook `useCounterLogic`
 
 ---
