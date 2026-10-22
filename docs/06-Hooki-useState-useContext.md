@@ -94,6 +94,8 @@ setCount((prevCount) => prevCount + step);
 
 `useEffect` pozwala wykonać kod „efektu ubocznego” po renderze (np. logowanie, timery, pobieranie danych).
 
+`CounterWithLog` to **osobny, nowy komponent** — nie jest to rozbudowa pliku `Counter.js` z Kroku 2. Utwórz nowy plik `src/components/CounterWithLog.js`:
+
 ```jsx
 'use client';
 
@@ -115,6 +117,25 @@ export default function CounterWithLog() {
 }
 ```
 
+Aby zobaczyć ten komponent na stronie, trzeba go **zaimportować i wstawić w JSX** — sam utworzenie pliku nie wystarczy. Dodaj go np. do `src/app/page.js`:
+
+```jsx
+import CounterWithLog from '@/components/CounterWithLog';
+
+export default function HomePage() {
+  return (
+    <main style={{ padding: '2rem' }}>
+      {/* ...pozostała zawartość strony... */}
+      <CounterWithLog />
+    </main>
+  );
+}
+```
+
+Po zapisaniu otwórz stronę w przeglądarce i **konsolę DevTools** (`F12` → zakładka Console, patrz instrukcja `02-DevToolsChrome.md`). Przy każdym kliknięciu „Zwiększ” powinien pojawić się nowy wpis `Licznik zmienił wartość na: ...` — to dowód, że efekt uruchamia się po renderze, jako reakcja na zmianę `count`.
+
+> Jest to komponent **niezależny** od `Counter` z Kroku 2 — ma własny, osobny stan `count`. Dodanie `<CounterWithLog />` obok `<Counter />` na tej samej stronie nie wpłynie na działanie `Countera` i odwrotnie.
+
 ### Tablica zależności (`deps`)
 
 | Zapis | Kiedy efekt się uruchamia |
@@ -123,7 +144,11 @@ export default function CounterWithLog() {
 | `useEffect(fn, [])` | tylko **raz**, po pierwszym renderze |
 | `useEffect(fn, [count])` | za każdym razem, gdy zmieni się `count` |
 
-### Funkcja sprzątająca (cleanup)
+---
+
+## Krok 4: Funkcja sprzątająca (cleanup) — `TickTimer`
+
+Niektóre efekty uruchamiają coś, co trzeba później **posprzątać** — np. timer, który inaczej będzie tykał w nieskończoność, nawet gdy komponent zniknie ze strony. Służy do tego **funkcja zwracana** przez `useEffect`:
 
 ```jsx
 useEffect(() => {
@@ -132,9 +157,72 @@ useEffect(() => {
 }, []);
 ```
 
+React wywołuje tę funkcję zwrotną w dwóch sytuacjach:
+1. Tuż **przed ponownym uruchomieniem** tego samego efektu (gdy zmieni się coś z tablicy zależności).
+2. Gdy komponent zostaje **odmontowany** (znika ze strony — np. przechodzisz na inną podstronę).
+
+Bez funkcji sprzątającej `setInterval` działałby dalej nawet po usunięciu komponentu z ekranu — to częsty błąd nazywany **wyciekiem pamięci (memory leak)**.
+
+Zobacz to na żywo — utwórz `src/components/TickTimer.js`:
+
+```jsx
+'use client';
+
+import { useState, useEffect } from 'react';
+
+export default function TickTimer() {
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    console.log('Timer wystartował');
+
+    const interval = setInterval(() => {
+      setTick((prev) => prev + 1);
+    }, 1000);
+
+    return () => {
+      console.log('Timer posprzątany (clearInterval)');
+      clearInterval(interval);
+    };
+  }, []); // pusta tablica — efekt uruchamia się tylko raz, przy pierwszym renderze
+
+  return <p>Upłynęło sekund: {tick}</p>;
+}
+```
+
+Aby przetestować działanie cleanup, potrzebny jest komponent rodzica, który potrafi **pokazać i ukryć** `TickTimer` (czyli go zamontować/odmontować). Utwórz `src/components/TimerToggle.js`:
+
+```jsx
+'use client';
+
+import { useState } from 'react';
+import TickTimer from './TickTimer';
+
+export default function TimerToggle() {
+  const [showTimer, setShowTimer] = useState(true);
+
+  return (
+    <div>
+      <button onClick={() => setShowTimer(!showTimer)}>
+        {showTimer ? 'Ukryj timer' : 'Pokaż timer'}
+      </button>
+      {showTimer && <TickTimer />}
+    </div>
+  );
+}
+```
+
+Dodaj `<TimerToggle />` do `src/app/page.js` (analogicznie jak `CounterWithLog` powyżej) i otwórz konsolę DevTools:
+
+- Po załadowaniu strony zobaczysz w konsoli `Timer wystartował`, a licznik sekund będzie rósł co sekundę.
+- Po kliknięciu „Ukryj timer” komponent `TickTimer` zostaje odmontowany — React wywołuje funkcję sprzątającą i w konsoli pojawi się `Timer posprzątany (clearInterval)`. Licznik **przestaje się zwiększać** w tle.
+- Po ponownym kliknięciu „Pokaż timer” `TickTimer` montuje się od nowa — efekt uruchamia się ponownie, licznik startuje od zera.
+
+> **Bez `return () => clearInterval(interval)`** timer działałby dalej nawet po kliknięciu „Ukryj timer” — po prostu nie byłoby go widać na ekranie, ale nadal zużywałby zasoby w tle. To właśnie obrazuje, po co jest funkcja sprzątająca.
+
 ---
 
-## Krok 4: Współdzielenie stanu — „lifting state up”
+## Krok 5: Współdzielenie stanu — „lifting state up”
 
 Stan utworzony przez `useState` jest **lokalny** dla komponentu — inne komponenty nie mają do niego bezpośredniego dostępu. Najprostszy sposób współdzielenia: przenieś stan do **wspólnego rodzica** i przekaż go w dół jako **propsy**.
 
@@ -186,11 +274,11 @@ export default function CounterDashboard() {
 
 ---
 
-## Krok 5: `useContext` — współdzielenie stanu bez „prop drilling”
+## Krok 6: `useContext` — współdzielenie stanu bez „prop drilling”
 
 Gdy wiele zagnieżdżonych komponentów potrzebuje tego samego stanu, przekazywanie propsów przez wiele poziomów („prop drilling”) staje się niewygodne. Rozwiązaniem jest **Context API**.
 
-### 5.1. Utwórz kontekst
+### 6.1. Utwórz kontekst
 
 Utwórz `src/context/CounterContext.js`:
 
@@ -220,7 +308,7 @@ export function useCounter() {
 }
 ```
 
-### 5.2. Owiń drzewo komponentów providerem
+### 6.2. Owiń drzewo komponentów providerem
 
 W `src/app/layout.js` (lub w dowolnym miejscu, gdzie potrzebny jest wspólny stan):
 
@@ -240,7 +328,7 @@ export default function RootLayout({ children }) {
 }
 ```
 
-### 5.3. Użyj kontekstu w dowolnym, zagnieżdżonym komponencie
+### 6.3. Użyj kontekstu w dowolnym, zagnieżdżonym komponencie
 
 ```jsx
 'use client';
@@ -257,7 +345,7 @@ Teraz **dowolny** komponent w drzewie opakowanym przez `CounterProvider` ma dost
 
 ---
 
-## Krok 6: Kiedy używać czego?
+## Krok 7: Kiedy używać czego?
 
 | Sytuacja | Rozwiązanie |
 |---|---|
@@ -268,7 +356,7 @@ Teraz **dowolny** komponent w drzewie opakowanym przez `CounterProvider` ma dost
 
 ---
 
-## Krok 7 (dla chętnych): Własny hook
+## Krok 8 (dla chętnych): Własny hook
 
 Możesz wydzielić logikę licznika do **własnego hooka**, aby łatwo używać jej w wielu komponentach:
 
@@ -317,7 +405,9 @@ export default function SimpleCounter() {
 
 - [ ] Rozumiem, że `useState(x)` — `x` to wartość początkowa, nie „indeks”
 - [ ] Potrafię użyć wielu niezależnych `useState` w jednym komponencie
+- [ ] Utworzony i podpięty do strony `CounterWithLog` (efekt reagujący na zmianę `count`)
 - [ ] Rozumiem tablicę zależności w `useEffect` (`[]`, `[count]`, brak tablicy)
+- [ ] Utworzone `TickTimer` i `TimerToggle` — przetestowane działanie funkcji sprzątającej (log w konsoli przy odmontowaniu)
 - [ ] Zaimplementowany `CounterDashboard` ze stanem podniesionym do rodzica
 - [ ] Utworzony `CounterContext` i działające współdzielenie stanu przez `useContext`
 - [ ] (opcjonalnie) Utworzony własny hook `useCounterLogic`
