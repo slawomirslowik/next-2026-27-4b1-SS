@@ -272,6 +272,21 @@ export default function CounterDashboard() {
 
 **Zasada:** dane płyną w dół (props), zmiany płyną w górę (wywołanie przekazanej funkcji settera).
 
+#### Jak dokładnie wygląda przepływ stanu „od rodzica w dół”
+
+```
+CounterDashboard  (tu żyje stan: count, setCount)
+├─ba CounterDisplay   ← otrzymuje props: count
+└─ba CounterButtons   ← otrzymuje props: count, setCount
+```
+
+- `CounterDisplay` i `CounterButtons` **same w sobie nie mają żadnego `useState`** — cały stan „mieszka” wyłącznie w `CounterDashboard`.
+- Rodzic przekazuje wartość `count` do `CounterDisplay` (`<CounterDisplay count={count} />`) — to jest właśnie **przepływ w dół**.
+- Rodzic przekazuje też `setCount` do `CounterButtons` (`<CounterButtons count={count} setCount={setCount} />`) — dzięki temu dziecko **nie modyfikuje stanu samodzielnie**, tylko wywołuje funkcję otrzymaną od rodzica (`onClick={() => setCount(count + 1)}`), co powoduje ponowny render **całego** `CounterDashboard` wraz z jego dziećmi.
+- Dzięki temu `CounterDisplay` **zawsze** pokazuje aktualną wartość, mimo że sam jej nie przechowuje — dostaje ją na nowo przy każdym renderze rodzica.
+
+**Jak to zobaczyć w projekcie:** w `src/app/page.js` znajduje się sekcja „Krok 5: CounterDashboard (lifting state up)” z użytym komponentem `<CounterDashboard />`. Otwórz stronę główną i kliknij „Zwiększ”/„Zmniejsz” — przycisk znajduje się w `CounterButtons`, ale wartość zmienia się w `CounterDisplay`, chociaż to dwa zupełnie osobne pliki/komponenty. To właśnie dowodzi, że działa przekazywanie stanu przez wspólnego rodzica.
+
 ---
 
 ## Krok 6: `useContext` — współdzielenie stanu bez „prop drilling”
@@ -373,7 +388,9 @@ export default function ContextCounterButton() {
 }
 ```
 
-**c) Użyj obu komponentów w `src/app/page.js` — bez przekazywania żadnych propsów:**
+**c) Użyj obu komponentów w `src/app/page.js` — bez przekazywania żadnych propsów.**
+
+Żeby lepiej było widać na stronie, że to dwa **osobne pliki/komponenty** połączone tylko kontekstem, opakuj je w kolorowe ramki z podpisem nazwy pliku:
 
 ```jsx
 import ContextCounterDisplay from '@/components/ContextCounterDisplay';
@@ -383,8 +400,30 @@ export default function HomePage() {
   return (
     <main style={{ padding: '2rem' }}>
       {/* ...pozostała zawartość strony... */}
-      <ContextCounterDisplay />
-      <ContextCounterButton />
+
+      <h2>Krok 6: Context (ContextCounterDisplay + ContextCounterButton)</h2>
+      <p style={{ fontSize: '0.9rem', color: '#555' }}>
+        Poniżej dwa <strong>osobne, niepowiązane propsami komponenty</strong> (dwa osobne pliki).
+        Łączy je wyłącznie wspólny <code>CounterContext</code> z <code>layout.js</code>.
+      </p>
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ border: '2px solid #2563eb', borderRadius: 8, padding: '1rem', flex: '1 1 200px' }}>
+          <p style={{ fontWeight: 'bold', color: '#2563eb', margin: 0 }}>
+            Plik: ContextCounterDisplay.js
+          </p>
+          <ContextCounterDisplay />
+        </div>
+        <div style={{ border: '2px solid #16a34a', borderRadius: 8, padding: '1rem', flex: '1 1 200px' }}>
+          <p style={{ fontWeight: 'bold', color: '#16a34a', margin: 0 }}>
+            Plik: ContextCounterButton.js
+          </p>
+          <ContextCounterButton />
+        </div>
+      </div>
+      <p style={{ fontSize: '0.85rem', color: '#777' }}>
+        Kliknij przycisk w zielonej ramce (ContextCounterButton) — wartość w niebieskiej ramce
+        (ContextCounterDisplay) zmieni się automatycznie, mimo że to dwa różne komponenty.
+      </p>
     </main>
   );
 }
