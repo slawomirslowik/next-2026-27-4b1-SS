@@ -11,10 +11,12 @@ import GreetingForm from '@/components/GreetingForm';
 
 export default function HomePage() {
   return (
-    <main style={{ padding: '2rem' }}>
+    <main className="p-8 text-zinc-900 dark:text-zinc-100">
       <h1>Witaj na naszej stronie głównej!</h1>
       <p>To jest pierwsza strona stworzona w Next.js z App Routerem.</p>
       <Link href="/about">Przejdź do strony O nas</Link>
+      {' '}|{' '}
+      <Link href="/style-guide">Zobacz Style Guide</Link>
 
       <h2>Krok 2: Counter (useState — count, step, isVisible)</h2>
         <Card title="Licznik odwiedzin">
@@ -34,25 +36,25 @@ export default function HomePage() {
       <CounterDashboard />
 
       <h2>Krok 6: Context (ContextCounterDisplay + ContextCounterButton)</h2>
-      <p style={{ fontSize: '0.9rem', color: '#555' }}>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
         Poniżej dwa <strong>osobne, niepowiązane propsami komponenty</strong> (dwa osobne pliki).
         Łączy je wyłącznie wspólny <code>CounterContext</code> z <code>layout.js</code>.
       </p>
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ border: '2px solid #2563eb', borderRadius: 8, padding: '1rem', flex: '1 1 200px' }}>
-          <p style={{ fontWeight: 'bold', color: '#2563eb', margin: 0 }}>
+      <div className="flex flex-wrap gap-4">
+        <div className="flex-1 min-w-[200px] rounded-lg border-2 border-blue-600 bg-blue-50 p-4 dark:border-blue-400 dark:bg-blue-950">
+          <p className="m-0 font-bold text-blue-600 dark:text-blue-300">
             Plik: ContextCounterDisplay.js
           </p>
           <ContextCounterDisplay />
         </div>
-        <div style={{ border: '2px solid #16a34a', borderRadius: 8, padding: '1rem', flex: '1 1 200px' }}>
-          <p style={{ fontWeight: 'bold', color: '#16a34a', margin: 0 }}>
+        <div className="flex-1 min-w-[200px] rounded-lg border-2 border-green-600 bg-green-50 p-4 dark:border-green-400 dark:bg-green-950">
+          <p className="m-0 font-bold text-green-600 dark:text-green-300">
             Plik: ContextCounterButton.js
           </p>
           <ContextCounterButton />
         </div>
       </div>
-      <p style={{ fontSize: '0.85rem', color: '#777' }}>
+      <p className="text-sm text-zinc-500 dark:text-zinc-400">
         Kliknij przycisk w zielonej ramce (ContextCounterButton) — wartość w niebieskiej ramce
         (ContextCounterDisplay) zmieni się automatycznie, mimo że to dwa różne komponenty.
       </p>

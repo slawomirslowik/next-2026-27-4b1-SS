@@ -3,7 +3,7 @@ import Card from '@/components/Card';
 
 export default function AboutPage() {
   return (
-    <main style={{ padding: '2rem' }}>
+    <main className="p-8 text-zinc-900 dark:text-zinc-100">
       <h1>O nas</h1>
       <Card title="Nasza misja">
         <h2>------------------------------------------------</h2>

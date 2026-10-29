@@ -1,7 +1,9 @@
+import styles from './Card.module.css';
+
 export default function Card({ title, children }) {
   return (
-    <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: '1rem' }}>
-      <h2>{title}</h2>
+    <div className={styles.card}>
+      <h2 className={styles.title}>{title}</h2>
       <div>{children}</div>
     </div>
   );
